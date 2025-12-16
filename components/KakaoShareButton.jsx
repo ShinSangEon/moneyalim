@@ -6,11 +6,16 @@ import { MessageCircle } from "lucide-react";
 export default function KakaoShareButton({ title, description, imageUrl }) {
     useEffect(() => {
         // Kakao SDK 초기화
-        if (typeof window !== "undefined" && window.Kakao) {
+        const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_KEY;
+
+        // 키가 없거나 더미 값일 경우 초기화하지 않음
+        if (typeof window !== "undefined" && window.Kakao && kakaoKey && kakaoKey !== 'undefined') {
             if (!window.Kakao.isInitialized()) {
-                // TODO: 실제 운영 시에는 본인의 JavaScript 키를 발급받아 교체해야 합니다.
-                // developers.kakao.com 에서 키 발급 -> [플랫폼] -> [Web] 사이트 도메인 등록 필요
-                window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_KEY);
+                try {
+                    window.Kakao.init(kakaoKey);
+                } catch (error) {
+                    console.error("Kakao SDK init failed:", error);
+                }
             }
         }
     }, []);
