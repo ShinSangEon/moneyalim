@@ -257,22 +257,46 @@ export async function GET(request) {
                     ]
                 });
             } else {
-                // 특정 지역 선택 시: 해당 지역 + 전국 데이터 포함
-                // 단, 전국/null 데이터라 하더라도 '다른 지역'의 이름이 카테고리에 포함되어 있으면 제외
-                const otherRegions = FILTER_REGIONS
-                    .filter(r => r.value !== '전체' && r.value !== '전국' && r.value !== region)
-                    .map(r => r.value);
+                // 지역 변형 키워드 정의 (약어와 전체 명칭 모두 포함)
+                const REGION_VARIANTS = {
+                    "서울": ["서울"],
+                    "부산": ["부산"],
+                    "대구": ["대구"],
+                    "인천": ["인천"],
+                    "광주": ["광주"],
+                    "대전": ["대전"],
+                    "울산": ["울산"],
+                    "세종": ["세종"],
+                    "경기": ["경기"],
+                    "강원": ["강원"],
+                    "충북": ["충북", "충청북"],
+                    "충남": ["충남", "충청남"],
+                    "전북": ["전북", "전라북"],
+                    "전남": ["전남", "전라남"],
+                    "경북": ["경북", "경상북"],
+                    "경남": ["경남", "경상남"],
+                    "제주": ["제주"],
+                };
+
+                // 다른 지역들의 모든 변형 키워드 수집
+                const otherRegionKeywords = [];
+                FILTER_REGIONS.forEach(r => {
+                    if (r.value !== '전체' && r.value !== '전국' && r.value !== region) {
+                        const variants = REGION_VARIANTS[r.value] || [r.value];
+                        otherRegionKeywords.push(...variants);
+                    }
+                });
 
                 where.AND.push({
                     OR: [
                         { region: { contains: region } }, // 1. 명시적으로 해당 지역인 경우
                         {
                             AND: [
-                                { OR: [{ region: '전국' }, { region: null }] }, // 2. 전국 또는 지역 미정인 경우
+                                { OR: [{ region: '전국' }, { region: null }] }, // 2. 전국 또는 지역 미정인 경우 (예: 교육청, 중앙부처 등)
                                 {
-                                    // 다른 지역명이 카테고리(소관기관)에 포함되지 않아야 함
+                                    // 다른 지역명이 카테고리(소관기관)에 완전히 포함되지 않아야 함
                                     NOT: {
-                                        OR: otherRegions.map(r => ({ category: { contains: r } }))
+                                        OR: otherRegionKeywords.map(k => ({ category: { contains: k } }))
                                     }
                                 }
                             ]
