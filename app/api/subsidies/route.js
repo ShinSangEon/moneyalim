@@ -228,11 +228,29 @@ export async function GET(request) {
                     ]
                 });
             } else {
-                // 특정 지역 선택 시: 해당 지역 + 전국 데이터 포함
-                // 단, 전국/null 데이터라 하더라도 '다른 지역'의 이름이 카테고리에 포함되어 있으면 제외
+                // 지역 이형태 매핑 (검색 제외용)
+                const REGION_ALIASES = {
+                    "충북": ["충청북"],
+                    "충남": ["충청남"],
+                    "전북": ["전라북"],
+                    "전남": ["전라남"],
+                    "경북": ["경상북"],
+                    "경남": ["경상남"],
+                    "강원": ["강원"], // 강원도, 강원특별자치도 등 포함됨
+                };
+
+                // 다른 지역 필터링 (해당 지역 + 전국 데이터 포함하되, 다른 지역 명시된 것 제외)
                 const otherRegions = FILTER_REGIONS
-                    .filter(r => r.value !== '전체' && r.value !== '전국' && r.value !== region)
-                    .map(r => r.value);
+                    .filter(r => r.value !== '전체' && r.value !== '전국' && r.value !== region);
+
+                // 제외할 키워드 목록 생성 (기본 지역명 + 이형태)
+                const excludeKeywords = [];
+                otherRegions.forEach(r => {
+                    excludeKeywords.push(r.value);
+                    if (REGION_ALIASES[r.value]) {
+                        excludeKeywords.push(...REGION_ALIASES[r.value]);
+                    }
+                });
 
                 where.AND.push({
                     OR: [
@@ -243,7 +261,7 @@ export async function GET(request) {
                                 {
                                     // 다른 지역명이 카테고리(소관기관)에 포함되지 않아야 함
                                     NOT: {
-                                        OR: otherRegions.map(r => ({ category: { contains: r } }))
+                                        OR: excludeKeywords.map(k => ({ category: { contains: k } }))
                                     }
                                 }
                             ]

@@ -177,6 +177,33 @@ export default function SearchPage() {
                             ))}
                         </div>
                     </div>
+
+                    {/* 출생연도 필터 (나이) */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <Users className="w-4 h-4 text-purple-400" />
+                            <span className="text-sm font-medium text-slate-300">출생연도 (나이 맞춤)</span>
+                        </div>
+                        <div className="relative max-w-xs">
+                            <select
+                                value={searchParams.get("age") || ""}
+                                onChange={(e) => updateFilter("age", e.target.value)}
+                                className="w-full appearance-none bg-slate-700/60 text-white border border-white/5 rounded-lg px-4 py-2.5 pr-10 focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
+                            >
+                                <option value="">전체 (출생연도 선택)</option>
+                                {Array.from({ length: 86 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                                    <option key={year} value={year}>
+                                        {year}년생 ({new Date().getFullYear() - year + 1}세)
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Loading State */}
