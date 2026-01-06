@@ -44,11 +44,8 @@ model Subsidy {
   @@index([region])
   @@index([endDate])      // 마감일 인덱스 추가
   @@index([createdAt])
-<<<<<<< HEAD
   @@index([views])        // 인기순 정렬 최적화
   @@index([title])        // 검색 최적화
-=======
->>>>>>> 3f4ca692e40e5929e561822bcbe335956b9daaf4
 }
 
 model Category {
