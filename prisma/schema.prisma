@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Subsidy {
+  id                String   @id @default(cuid())
+  serviceId         String   @unique  // API의 서비스ID
+  title             String              // 서비스명
+  description       String?  @db.Text  // 서비스목적요약
+  category          String              // 소관기관명
+  target            String?  @db.Text  // 지원대상
+  region            String?             // 지역구분
+  amount            String?  @db.Text  // 지원내용
+  period            String?             // 신청기한내용
+  endDate           DateTime?           // 마감일 (파싱된 날짜)
+  
+  // 상세 정보
+  fullDescription   String?  @db.Text  // 지원내용 전체
+  requirements      String?  @db.Text  // 선정기준내용
+  applicationMethod String?  @db.Text  // 신청방법내용
+  requiredDocs      String?  @db.Text  // 구비서류내용
+  contactInfo       String?             // 문의처전화번호
+  hostOrg           String?             // 소관기관명
+  
+  // URL 정보
+  serviceUrl        String?             // 온라인신청사이트URL
+  gov24Url          String?             // 정부24 상세페이지
+  searchUrl         String?             // 검색 링크
+  
+  // 메타 정보
+  views             Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([category])
+  @@index([region])
+  @@index([endDate])      // 마감일 인덱스 추가
+  @@index([createdAt])
+  @@index([views])        // 인기순 정렬 최적화
+  @@index([title])        // 검색 최적화
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+}
+
+// 동기화 상태 추적
+model SyncLog {
+  id          String   @id @default(cuid())
+  syncedAt    DateTime @default(now())
+  totalCount  Int      // 동기화된 총 데이터 수
+  newCount    Int      // 새로 추가된 데이터 수
+  updatedCount Int     // 업데이트된 데이터 수
+  status      String   // success, failed
+  message     String?
+}
+
+model SearchTerm {
+  term      String   @id
+  count     Int      @default(1)
+  updatedAt DateTime @updatedAt
+
+  @@index([count])
+  @@index([updatedAt])
+}
