@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import SubsidyCard from "@/components/SubsidyCard";
 import Footer from "@/components/Footer";
-import { Search, Loader2, RefreshCw, MapPin, Briefcase } from "lucide-react";
+import { Search, Loader2, RefreshCw, MapPin, Briefcase, Users } from "lucide-react";
 import { FILTER_CATEGORIES, FILTER_REGIONS } from "@/lib/utils";
 
 export default function SearchPage() {
@@ -270,16 +270,45 @@ export default function SearchPage() {
                         </div>
 
                         {subsidies.length === 0 && (
-                            <div className="text-center py-20">
-                                <div className="text-6xl mb-4">🔍</div>
-                                <p className="text-gray-400 text-lg mb-2">검색 결과가 없습니다.</p>
-                                <p className="text-gray-500 text-sm mb-4">다른 조건으로 검색해보세요.</p>
-                                <button
-                                    onClick={resetFilters}
-                                    className="text-blue-400 hover:text-blue-300 font-medium"
-                                >
-                                    필터 초기화하기
-                                </button>
+                            <div className="text-center py-16">
+                                <div className="bg-slate-800/50 rounded-2xl p-8 max-w-xl mx-auto border border-white/5">
+                                    <div className="text-6xl mb-6">🔍</div>
+                                    <h3 className="text-xl font-bold text-white mb-3">
+                                        현재 조건에 맞는 지원금이 없습니다
+                                    </h3>
+                                    <p className="text-slate-400 mb-6">
+                                        검색 조건을 변경하거나 필터를 초기화해보세요.
+                                    </p>
+                                    <button
+                                        onClick={resetFilters}
+                                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors mb-8"
+                                    >
+                                        필터 초기화하기
+                                    </button>
+
+                                    {/* 추천 콘텐츠 */}
+                                    <div className="border-t border-white/5 pt-6 mt-6">
+                                        <p className="text-sm text-slate-500 mb-4">
+                                            대신 이런 지원금도 함께 확인해보세요
+                                        </p>
+                                        <div className="flex flex-wrap justify-center gap-2">
+                                            {[
+                                                { label: "👨‍👩‍👧 가족/여성", category: "가족/여성" },
+                                                { label: "💼 일자리/창업", category: "일자리/창업" },
+                                                { label: "🏠 주거/국토", category: "주거/국토" },
+                                                { label: "📚 교육", category: "교육" },
+                                            ].map((item) => (
+                                                <button
+                                                    key={item.category}
+                                                    onClick={() => updateFilter("category", item.category)}
+                                                    className="px-3 py-2 bg-slate-700/60 hover:bg-slate-600 text-slate-300 hover:text-white text-sm rounded-lg transition-colors"
+                                                >
+                                                    {item.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </>

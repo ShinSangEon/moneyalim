@@ -5,6 +5,9 @@ import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function MobileStickyAd() {
+    // [승인 전 비활성화]
+    return null;
+
     const [isVisible, setIsVisible] = useState(true);
 
     if (!isVisible) return null;

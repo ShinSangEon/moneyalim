@@ -100,9 +100,9 @@ export default function Hero({ totalCount }) {
                     transition={{ duration: 0.5, delay: 0.2 }}
                     className="mt-4 sm:mt-6 text-base sm:text-xl text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed px-4"
                 >
-                    복잡한 조건은 이제 그만. <br className="block sm:hidden" />
-                    <span className="text-slate-200 font-semibold">AI 맞춤 분석</span>으로 <br className="block sm:hidden" />내가 받을 수 있는 모든 혜택을<br className="hidden sm:block" />
-                    <span className="text-blue-400 font-bold"> 단 3초</span> 만에 확인하세요.
+                    지역별·대상별로 흩어져 있는 <br className="block sm:hidden" />
+                    <span className="text-slate-200 font-semibold">정부 지원금 정보</span>를 <br className="hidden sm:block" />
+                    한 곳에서 <span className="text-blue-400 font-bold">쉽고 빠르게</span> 찾아보세요.
                 </motion.p>
 
                 <motion.div

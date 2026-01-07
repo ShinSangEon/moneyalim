@@ -3,13 +3,16 @@
 import { useEffect, useRef } from "react";
 
 export default function AdSense({
-    pid = "ca-pub-XXXXXXXXXXXXXXXX", // 나중에 사용자 코드로 변경
+    pid = process.env.NEXT_PUBLIC_ADSENSE_ID, // .env에서 가져옴
     slot = "XXXXXXXXXX", // 나중에 사용자 코드로 변경
     style = { display: "block" },
     format = "auto",
     responsive = "true",
     layoutKey = "" // In-feed 광고용
 }) {
+    // [승인 전 비활성화] 콘텐츠 중심 심사를 위해 광고 컴포넌트 렌더링 중단
+    return null;
+
     const isDev = process.env.NODE_ENV === "development";
     const adRef = useRef(null);
 

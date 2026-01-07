@@ -35,7 +35,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="antialiased font-pretendard">
-        {/* Google AdSense Script */}
+        {/* Google AdSense Script - 승인 전까지 비활성화
         {process.env.NEXT_PUBLIC_ADSENSE_ID && (
           <script
             async
@@ -43,6 +43,7 @@ export default function RootLayout({ children }) {
             crossOrigin="anonymous"
           />
         )}
+        */}
 
         {/* Kakao SDK */}
         <script

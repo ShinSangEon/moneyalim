@@ -70,7 +70,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-[#0f172a] selection:bg-blue-500/30">
       <Navbar />
-      <FloatingAds />
+      {/* <FloatingAds /> - 승인 전 비활성화 */}
       <Hero totalCount={subsidies.length} />
       <SearchFilter />
 
@@ -110,9 +110,11 @@ export default async function Home() {
           </div>
         )}
 
+        {/* 
         <div className="mt-20 mb-10 text-center">
           <AdSense slot="MAIN_BOTTOM" format="autorelaxed" />
-        </div>
+        </div> 
+        */}
       </div>
 
       <Footer />
