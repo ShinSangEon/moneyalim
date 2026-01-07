@@ -21,9 +21,19 @@ export default function KakaoShareButton({ title, description, imageUrl }) {
     }, []);
 
     const handleShare = () => {
-        if (typeof window !== "undefined" && window.Kakao) {
+        if (typeof window !== "undefined") {
+            if (!window.Kakao) {
+                alert("카카오 SDK가 로드되지 않았습니다. 새로고침 후 다시 시도해주세요.");
+                return;
+            }
+
             if (!window.Kakao.isInitialized()) {
-                alert("카카오 키 설정이 필요합니다. (개발자 설정)");
+                console.log("Kakao Key:", process.env.NEXT_PUBLIC_KAKAO_KEY); // 디버깅용
+                alert(`카카오 초기화 실패. 키 설정을 확인해주세요. (현재 키: ${process.env.NEXT_PUBLIC_KAKAO_KEY ? "설정됨" : "미설정"})`);
+
+                // 재시도
+                const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_KEY;
+                if (kakaoKey) window.Kakao.init(kakaoKey);
                 return;
             }
 

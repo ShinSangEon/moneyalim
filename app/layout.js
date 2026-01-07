@@ -1,5 +1,6 @@
 import "./globals.css";
 import MobileStickyAd from "@/components/MobileStickyAd";
+import Script from "next/script";
 
 export const metadata = {
   metadataBase: new URL('https://moneyalim.com'),
@@ -50,11 +51,13 @@ export default function RootLayout({ children }) {
         */}
 
         {/* Kakao SDK */}
-        <script
+        {/* Kakao SDK */}
+        <Script
           src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
-          integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2txfYR9bGr4uwcUK87e72n"
+          integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4"
           crossOrigin="anonymous"
-        ></script>
+          strategy="afterInteractive"
+        />
 
         {/* Google Analytics (GA4) */}
         {process.env.NEXT_PUBLIC_GA_ID && (
