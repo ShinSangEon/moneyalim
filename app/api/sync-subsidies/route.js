@@ -48,84 +48,23 @@ function isExpired(endDate) {
     return endDate < today;
 }
 
-// 공공데이터 API에서 전체 데이터 가져오기
-async function fetchAllSubsidiesFromAPI() {
-    const BASE_URL = 'https://api.odcloud.kr/api';
-    const API_KEY = process.env.SUBSIDY_API_KEY;
+// 변경 사항 감지 헬퍼 함수
+function hasChanged(oldData, newData) {
+    if (!oldData) return true;
 
-    let allServices = [];
-    let page = 1;
-    const perPage = 100;
-    let hasMore = true;
-
-    console.log('📡 공공데이터 API에서 데이터 가져오기 시작...');
-
-    while (hasMore) { // 전체 데이터 가져오기 (페이지 제한 제거)
-        try {
-            const response = await axios.get(`${BASE_URL}/gov24/v3/serviceList`, {
-                params: {
-                    page: page,
-                    perPage: perPage,
-                    serviceKey: API_KEY,
-                },
-            });
-
-            const services = response.data?.data || [];
-            allServices = [...allServices, ...services];
-
-            console.log(`  📄 페이지 ${page}: ${services.length}개 로드`);
-
-            if (services.length < perPage) {
-                hasMore = false;
-            }
-
-            page++;
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-        } catch (error) {
-            console.error(`페이지 ${page} 로드 실패:`, error.message);
-            hasMore = false;
-        }
-    }
-
-    console.log(`✅ 총 ${allServices.length}개 데이터 로드 완료`);
-    return allServices;
-}
-
-// API 데이터를 DB 형식으로 변환
-function transformServiceData(service) {
-    const serviceId = service.서비스ID || '';
-    const serviceName = service.서비스명 || '';
-    const periodText = service.신청기한내용 || service.신청기한 || '';
-
-    // 마감일 파싱
-    const endDate = parseEndDate(periodText);
-
-    // URL 생성
-    const serviceUrl = service.온라인신청사이트URL || null;
-    const gov24Url = serviceId ? `https://www.gov.kr/portal/service/serviceInfo/${serviceId}` : null;
-    const searchUrl = serviceName ? `https://www.google.com/search?q=${encodeURIComponent(serviceName + ' 신청')}` : null;
-
-    return {
-        serviceId: serviceId,
-        title: serviceName || '제목 없음',
-        description: service.서비스목적요약 || null,
-        category: service.소관기관명 || '기타',
-        target: service.지원대상 || null,
-        region: service.지역구분 || null,
-        amount: service.지원내용 || null,
-        period: periodText || null,
-        endDate: endDate, // 마감일 추가
-        fullDescription: service.지원내용 || null,
-        requirements: service.선정기준내용 || null,
-        applicationMethod: service.신청방법내용 || null,
-        requiredDocs: service.구비서류내용 || null,
-        contactInfo: service.문의처전화번호 || null,
-        hostOrg: service.소관기관명 || null,
-        serviceUrl: serviceUrl,
-        gov24Url: gov24Url,
-        searchUrl: searchUrl,
-    };
+    // 주요 필드 비교 (필요에 따라 더 많은 필드 추가 가능)
+    // 날짜 비교는 getTime() 사용
+    return (
+        oldData.title !== newData.title ||
+        oldData.period !== newData.period ||
+        oldData.location !== newData.location ||
+        oldData.category !== newData.category ||
+        oldData.target !== newData.target ||
+        oldData.amount !== newData.amount ||
+        oldData.description !== newData.description ||
+        oldData.serviceUrl !== newData.serviceUrl ||
+        (oldData.endDate?.getTime() !== newData.endDate?.getTime())
+    );
 }
 
 export async function POST(request) {
@@ -140,74 +79,147 @@ export async function POST(request) {
     }
 
     try {
-        console.log('🔄 데이터 동기화 시작...');
+        console.log('🔄 데이터 동기화 시작 (최적화 모드)...');
         const startTime = Date.now();
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // 1. API에서 데이터 가져오기
-        const apiServices = await fetchAllSubsidiesFromAPI();
+        // 1. API 파라미터 및 변수 설정
+        const BASE_URL = 'https://api.odcloud.kr/api';
+        const API_KEY = process.env.SUBSIDY_API_KEY;
+        const perPage = 100;
+        let page = 1;
+        let hasMore = true;
 
-        if (apiServices.length === 0) {
-            throw new Error('API에서 데이터를 가져오지 못했습니다.');
-        }
-
-        // 2. 데이터 변환 및 필터링
         let newCount = 0;
         let updatedCount = 0;
         let skippedCount = 0;
         let deletedCount = 0;
+        let totalProcessed = 0;
 
-        const validServiceIds = [];
+        // 2. 페이지 단위 루프 (Memory 효율화)
+        while (hasMore) {
+            try {
+                // API 호출
+                const response = await axios.get(`${BASE_URL}/gov24/v3/serviceList`, {
+                    params: { page, perPage, serviceKey: API_KEY },
+                });
 
-        for (const service of apiServices) {
-            if (!service.서비스ID) continue;
+                const services = response.data?.data || [];
+                if (services.length === 0) {
+                    hasMore = false;
+                    break;
+                }
 
-            const data = transformServiceData(service);
+                // API 데이터 전처리 (유효한 데이터만 추출)
+                const validItems = [];
+                const validServiceIds = [];
 
-            // 만료된 데이터는 건너뛰기
-            if (isExpired(data.endDate)) {
-                skippedCount++;
-                console.log(`  ⏭️ 만료됨 - ${data.title} (${data.endDate?.toLocaleDateString()})`);
-                continue;
-            }
+                for (const service of services) {
+                    if (!service.서비스ID) continue;
 
-            validServiceIds.push(data.serviceId);
+                    const data = transformServiceData(service);
 
-            // upsert: 있으면 업데이트, 없으면 생성
-            const result = await prisma.subsidy.upsert({
-                where: { serviceId: data.serviceId },
-                update: {
-                    title: data.title,
-                    description: data.description,
-                    category: data.category,
-                    target: data.target,
-                    region: data.region,
-                    amount: data.amount,
-                    period: data.period,
-                    endDate: data.endDate,
-                    fullDescription: data.fullDescription,
-                    requirements: data.requirements,
-                    applicationMethod: data.applicationMethod,
-                    requiredDocs: data.requiredDocs,
-                    contactInfo: data.contactInfo,
-                    hostOrg: data.hostOrg,
-                    serviceUrl: data.serviceUrl,
-                    gov24Url: data.gov24Url,
-                    searchUrl: data.searchUrl,
-                },
-                create: data,
-            });
+                    // 만료된 데이터는 즉시 스킵 (DB 조회 불필요)
+                    if (isExpired(data.endDate)) {
+                        skippedCount++;
+                        continue;
+                    }
 
-            const isNew = result.createdAt.getTime() === result.updatedAt.getTime();
-            if (isNew) {
-                newCount++;
-            } else {
-                updatedCount++;
+                    validItems.push(data);
+                    validServiceIds.push(data.serviceId);
+                }
+
+                if (validItems.length > 0) {
+                    // DB에서 기존 데이터 조회 (Change Detection용)
+                    const existingRecords = await prisma.subsidy.findMany({
+                        where: { serviceId: { in: validServiceIds } },
+                        select: {
+                            serviceId: true,
+                            title: true,
+                            period: true,
+                            region: true,
+                            category: true,
+                            target: true,
+                            amount: true,
+                            description: true,
+                            serviceUrl: true,
+                            endDate: true
+                        }
+                    });
+
+                    const existingMap = new Map();
+                    existingRecords.forEach(r => existingMap.set(r.serviceId, r));
+
+                    const toCreate = [];
+                    const toUpdate = [];
+
+                    for (const item of validItems) {
+                        const existing = existingMap.get(item.serviceId);
+
+                        if (!existing) {
+                            toCreate.push(item);
+                        } else if (hasChanged(existing, item)) {
+                            toUpdate.push(item);
+                        }
+                        // 변경 없으면 아무것도 안 함 (Skip)
+                    }
+
+                    // 배치 실행: 신규 생성 (대량 삽입)
+                    if (toCreate.length > 0) {
+                        await prisma.subsidy.createMany({
+                            data: toCreate,
+                            skipDuplicates: true
+                        });
+                        newCount += toCreate.length;
+                    }
+
+                    // 배치 실행: 업데이트 (병렬 처리)
+                    if (toUpdate.length > 0) {
+                        await Promise.all(
+                            toUpdate.map(item =>
+                                prisma.subsidy.update({
+                                    where: { serviceId: item.serviceId },
+                                    data: {
+                                        title: item.title,
+                                        description: item.description,
+                                        category: item.category,
+                                        target: item.target,
+                                        region: item.region,
+                                        amount: item.amount,
+                                        period: item.period,
+                                        endDate: item.endDate,
+                                        fullDescription: item.fullDescription,
+                                        requirements: item.requirements,
+                                        applicationMethod: item.applicationMethod,
+                                        requiredDocs: item.requiredDocs,
+                                        contactInfo: item.contactInfo,
+                                        hostOrg: item.hostOrg,
+                                        serviceUrl: item.serviceUrl,
+                                        gov24Url: item.gov24Url,
+                                        searchUrl: item.searchUrl,
+                                    }
+                                })
+                            )
+                        );
+                        updatedCount += toUpdate.length;
+                    }
+                }
+
+                console.log(`  📄 페이지 ${page} 처리 완료: ${validItems.length}건 유효 / ${services.length}건 중`);
+                totalProcessed += services.length;
+                page++;
+
+                // 딜레이 (API 부하 방지)
+                await new Promise(r => setTimeout(r, 50));
+
+            } catch (err) {
+                console.error(`페이지 ${page} 처리 중 에러:`, err.message);
+                hasMore = false; // 에러 시 중단
             }
         }
 
-        // 3. DB에서 만료된 데이터 삭제
+        // 3. DB에서 만료된 데이터 삭제 (Cleanup)
         const deleteResult = await prisma.subsidy.deleteMany({
             where: {
                 AND: [
@@ -218,33 +230,33 @@ export async function POST(request) {
         });
         deletedCount = deleteResult.count;
 
-        if (deletedCount > 0) {
-            console.log(`  🗑️ 만료된 데이터 ${deletedCount}개 삭제됨`);
-        }
-
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
-        // 4. 동기화 로그 저장
+        // 4. 로그 저장
         await prisma.syncLog.create({
             data: {
                 totalCount: newCount + updatedCount,
-                newCount: newCount,
-                updatedCount: updatedCount,
+                newCount,
+                updatedCount,
                 status: 'success',
-                message: `${duration}초 소요, ${skippedCount}개 만료로 제외, ${deletedCount}개 삭제`,
+                message: `최적화 동기화: ${duration}초, ${skippedCount}개 만료 제외`,
             },
         });
 
-        console.log(`✅ 동기화 완료!`);
-        console.log(`   - 유효한 데이터: ${newCount + updatedCount}개`);
-        console.log(`   - 신규: ${newCount}개`);
-        console.log(`   - 업데이트: ${updatedCount}개`);
-        console.log(`   - 만료로 제외: ${skippedCount}개`);
-        console.log(`   - 삭제됨: ${deletedCount}개`);
+        console.log(`✅ 최적화 동기화 완료! (${duration}초)`);
+        console.log(`   - 신규: ${newCount}, 업데이트: ${updatedCount}`);
+        console.log(`   - 변경 없음(Skip): ${totalProcessed - newCount - updatedCount - skippedCount}`);
+        console.log(`   - 만료 제외: ${skippedCount}, 삭제됨: ${deletedCount}`);
 
-        // 캐시 무효화 (새 데이터 반영)
-        revalidateTag("subsidies");
-        console.log(`   - 캐시 무효화 완료`);
+        // 캐시 무효화 (revalidateTag 대체)
+        // revalidateTag("subsidies") 대신 path 기반 재검증 사용 권장
+        // 혹은 모든 페이지 갱신
+        try {
+            // 메인 페이지 및 검색 페이지 갱신
+            revalidateTag("subsidies");
+        } catch (e) {
+            console.log("Cache Revalidation warning:", e.message);
+        }
 
         return Response.json({
             success: true,
@@ -261,25 +273,13 @@ export async function POST(request) {
 
     } catch (error) {
         console.error('❌ 동기화 실패:', error);
-
-        try {
-            await prisma.syncLog.create({
-                data: {
-                    totalCount: 0,
-                    newCount: 0,
-                    updatedCount: 0,
-                    status: 'failed',
-                    message: error.message,
-                },
-            });
-        } catch (logError) {
-            console.error('로그 저장 실패:', logError);
-        }
-
-        return Response.json(
-            { success: false, error: error.message },
-            { status: 500 }
-        );
+        await prisma.syncLog.create({
+            data: {
+                totalCount: 0, newCount: 0, updatedCount: 0,
+                status: 'failed', message: error.message,
+            },
+        });
+        return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 

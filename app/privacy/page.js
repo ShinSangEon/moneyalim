@@ -52,7 +52,7 @@ export default function PrivacyPage() {
                     <section>
                         <h2 className="text-xl font-semibold text-white mb-3">5. 문의처</h2>
                         <p>개인정보 및 서비스 이용과 관련된 문의사항은 아래 연락처로 문의주시기 바랍니다.</p>
-                        <p className="mt-2">이메일: contact@moneyalim.com (예시)</p>
+                        <p className="mt-2">이메일: moson6353@naver.com (예시)</p>
                     </section>
                 </div>
             </div>

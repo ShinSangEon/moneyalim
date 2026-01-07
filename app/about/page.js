@@ -127,8 +127,8 @@ export default function AboutPage() {
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="text-slate-500 w-24">이메일</span>
-                                <a href="mailto:contact@moneyalim.com" className="text-blue-400 hover:underline">
-                                    contact@moneyalim.com
+                                <a href="mailto:moson6353@naver.com" className="text-blue-400 hover:underline">
+                                    moson6353@naver.com
                                 </a>
                             </div>
                             <div className="flex items-center gap-3">

@@ -34,10 +34,10 @@ export default function ContactPage() {
                                 서비스 관련 문의, 제휴 문의, 데이터 오류 제보 등
                             </p>
                             <a
-                                href="mailto:contact@moneyalim.com"
+                                href="mailto:moson6353@naver.com"
                                 className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-medium transition-colors"
                             >
-                                contact@moneyalim.com
+                                moson6353@naver.com
                                 <ExternalLink className="w-4 h-4" />
                             </a>
                         </div>
@@ -111,13 +111,18 @@ export default function ContactPage() {
                             FAQ에서 해결되지 않은 문의사항은<br />
                             이메일로 보내주시면 성심껏 답변드리겠습니다.
                         </p>
-                        <a
-                            href="mailto:contact@moneyalim.com"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors"
-                        >
-                            <Mail className="w-5 h-5" />
-                            이메일 보내기
-                        </a>
+                        <div className="relative inline-block group cursor-pointer">
+                            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+                            <a
+                                href="mailto:moson6353@naver.com"
+                                className="relative inline-flex items-center gap-3 px-8 py-4 bg-slate-900 ring-1 ring-white/10 rounded-xl leading-none"
+                            >
+                                <Mail className="w-6 h-6 text-purple-400 animate-pulse" />
+                                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                                    moson6353@naver.com
+                                </span>
+                            </a>
+                        </div>
                     </div>
                 </section>
             </div>

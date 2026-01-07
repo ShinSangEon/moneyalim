@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, X, Search, Heart, Calendar, DollarSign, Calculator, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -12,11 +13,23 @@ export default function Navbar() {
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
                 <div className="flex items-center justify-between h-16">
+
                     {/* Logo */}
-                    <div className="flex-shrink-0">
-                        <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-                            MoneyAlim
+                    <div className="flex-shrink-0 flex items-center gap-2">
+                        <Link href="/" className="flex items-center gap-2">
+                            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-white/10">
+                                <Image
+                                    src="/logo.png"
+                                    alt="MoneyAlim Logo"
+                                    fill
+                                    className="object-cover"
+                                />
+                            </div>
+                            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                                MoneyAlim
+                            </span>
                         </Link>
                     </div>
 

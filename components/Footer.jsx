@@ -48,8 +48,8 @@ export default function Footer() {
                         <h4 className="text-white font-semibold mb-4">문의하기</h4>
                         <ul className="space-y-2 text-sm text-slate-400">
                             <li>
-                                <a href="mailto:contact@moneyalim.com" className="hover:text-blue-400 transition-colors">
-                                    contact@moneyalim.com
+                                <a href="mailto:moson6353@naver.com" className="hover:text-blue-400 transition-colors">
+                                    moson6353@naver.com
                                 </a>
                             </li>
                             <li className="text-slate-500">평일 기준 1~3일 내 답변</li>
