@@ -3,7 +3,7 @@ import Hero from "@/components/Hero";
 import SearchFilter from "@/components/SearchFilter";
 import SubsidyCard from "@/components/SubsidyCard";
 import Footer from "@/components/Footer";
-import { getCachedSubsidies } from "@/lib/prisma";
+import { getCachedSubsidies, getCachedTotalCount } from "@/lib/prisma";
 import axios from "axios";
 import FloatingAds from "@/components/FloatingAds";
 import AdSense from "@/components/AdSense";
@@ -48,22 +48,32 @@ async function fetchFromAPI() {
 
 export default async function Home() {
   let subsidies = [];
+  let totalCount = 0;
   let source = "unknown";
 
   try {
     // 5분간 캐싱된 데이터 사용 (DB 쿼리 최소화)
-    subsidies = await getCachedSubsidies();
+    // 리스트와 전체 개수를 병렬로 조회
+    const [list, count] = await Promise.all([
+      getCachedSubsidies(),
+      getCachedTotalCount()
+    ]);
+
+    subsidies = list;
+    totalCount = count;
 
     if (subsidies.length > 0) {
       source = "database";
     } else {
       console.log("⚠️ DB가 비어있어 API에서 직접 가져옵니다.");
       subsidies = await fetchFromAPI();
+      totalCount = subsidies.length; // API fallback 시에는 리스트 개수만
       source = "api";
     }
   } catch (error) {
     console.error("데이터 로드 실패:", error);
     subsidies = await fetchFromAPI();
+    totalCount = subsidies.length;
     source = "api-fallback";
   }
 
@@ -71,7 +81,7 @@ export default async function Home() {
     <main className="min-h-screen bg-[#0f172a] selection:bg-blue-500/30">
       <Navbar />
       {/* <FloatingAds /> - 승인 전 비활성화 */}
-      <Hero totalCount={subsidies.length} />
+      <Hero totalCount={totalCount} />
       <SearchFilter />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -82,7 +92,7 @@ export default async function Home() {
           </h2>
           <div className="text-right">
             <span className="text-sm text-slate-400">
-              총 {subsidies.length}개
+              총 {totalCount}개
             </span>
             {source === "api" && (
               <p className="text-xs text-amber-400">
