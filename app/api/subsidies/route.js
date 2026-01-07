@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma, SUBSIDY_LIST_SELECT, getNotExpiredCondition } from '@/lib/prisma';
 import axios from 'axios';
 import { getKeywordsForCategory, FILTER_REGIONS } from '@/lib/utils';
 
@@ -133,54 +133,18 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '100');
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // 만료되지 않은 데이터만 조회하는 기본 조건
-    const notExpiredCondition = {
-        OR: [
-            { endDate: null }, // 상시
-            { endDate: { gte: today } }, // 아직 안 만료됨
-        ],
-    };
+    // 재사용 가능한 만료 조건
+    const notExpiredCondition = getNotExpiredCondition();
 
     try {
-        // 검색어 통계 저장
+        // 검색어 통계 저장 (비동기로 처리하여 응답 블로킹 방지)
         if (search && search.trim().length >= 2) {
             const term = search.trim();
-            // 인기도 집계
-            await prisma.searchTerm.upsert({
+            prisma.searchTerm.upsert({
                 where: { term: term },
                 update: { count: { increment: 1 } },
                 create: { term: term, count: 1 },
-            }).catch(err => console.error("Search log error:", err));
-        }
-
-        // DB에서 유효한 데이터 수 확인
-        const dbCount = await prisma.subsidy.count({
-            where: notExpiredCondition,
-        });
-
-        // DB가 비어있으면 API에서 직접 가져오기 (fallback)
-        if (dbCount === 0) {
-            console.log('⚠️ DB가 비어있어 API에서 직접 가져옵니다.');
-            const apiData = await fetchFromAPIDirectly({ search, category, region });
-
-            if (id) {
-                const found = apiData.find(s => s.serviceId === id || s.id === id);
-                if (found) {
-                    return Response.json({ success: true, data: found, source: 'api' });
-                }
-                return Response.json({ success: false, error: '지원금을 찾을 수 없습니다.' }, { status: 404 });
-            }
-
-            return Response.json({
-                success: true,
-                count: apiData.length,
-                data: apiData,
-                source: 'api',
-                message: '데이터베이스가 비어있어 API에서 직접 가져왔습니다. /api/sync-subsidies로 동기화해주세요.',
-            });
+            }).catch(() => { }); // 실패해도 무시
         }
 
         // 특정 ID 조회
@@ -200,17 +164,24 @@ export async function GET(request) {
             });
 
             if (subsidy) {
-                // 조회수 증가
-                await prisma.subsidy.update({
+                // 조회수 증가 (비동기로 처리하여 응답 블로킹 방지)
+                prisma.subsidy.update({
                     where: { id: subsidy.id },
                     data: { views: { increment: 1 } },
-                });
+                }).catch(() => { }); // 실패해도 무시
 
                 return Response.json({
                     success: true,
                     data: subsidy,
                     source: 'database',
                 });
+            }
+
+            // DB에 없으면 API에서 직접 가져오기 (fallback)
+            const apiData = await fetchFromAPIDirectly({ search: null, category: null, region: null });
+            const found = apiData.find(s => s.serviceId === id || s.id === id);
+            if (found) {
+                return Response.json({ success: true, data: found, source: 'api' });
             }
 
             return Response.json(
@@ -257,33 +228,27 @@ export async function GET(request) {
                     ]
                 });
             } else {
-                // 지역 변형 키워드 정의 (약어와 전체 명칭 모두 포함)
-                const REGION_VARIANTS = {
-                    "서울": ["서울"],
-                    "부산": ["부산"],
-                    "대구": ["대구"],
-                    "인천": ["인천"],
-                    "광주": ["광주"],
-                    "대전": ["대전"],
-                    "울산": ["울산"],
-                    "세종": ["세종"],
-                    "경기": ["경기"],
-                    "강원": ["강원"],
-                    "충북": ["충북", "충청북"],
-                    "충남": ["충남", "충청남"],
-                    "전북": ["전북", "전라북"],
-                    "전남": ["전남", "전라남"],
-                    "경북": ["경북", "경상북"],
-                    "경남": ["경남", "경상남"],
-                    "제주": ["제주"],
+                // 지역 이형태 매핑 (검색 제외용)
+                const REGION_ALIASES = {
+                    "충북": ["충청북"],
+                    "충남": ["충청남"],
+                    "전북": ["전라북"],
+                    "전남": ["전라남"],
+                    "경북": ["경상북"],
+                    "경남": ["경상남"],
+                    "강원": ["강원"], // 강원도, 강원특별자치도 등 포함됨
                 };
 
-                // 다른 지역들의 모든 변형 키워드 수집
-                const otherRegionKeywords = [];
-                FILTER_REGIONS.forEach(r => {
-                    if (r.value !== '전체' && r.value !== '전국' && r.value !== region) {
-                        const variants = REGION_VARIANTS[r.value] || [r.value];
-                        otherRegionKeywords.push(...variants);
+                // 다른 지역 필터링 (해당 지역 + 전국 데이터 포함하되, 다른 지역 명시된 것 제외)
+                const otherRegions = FILTER_REGIONS
+                    .filter(r => r.value !== '전체' && r.value !== '전국' && r.value !== region);
+
+                // 제외할 키워드 목록 생성 (기본 지역명 + 이형태)
+                const excludeKeywords = [];
+                otherRegions.forEach(r => {
+                    excludeKeywords.push(r.value);
+                    if (REGION_ALIASES[r.value]) {
+                        excludeKeywords.push(...REGION_ALIASES[r.value]);
                     }
                 });
 
@@ -296,7 +261,7 @@ export async function GET(request) {
                                 {
                                     // 다른 지역명이 카테고리(소관기관)에 완전히 포함되지 않아야 함
                                     NOT: {
-                                        OR: otherRegionKeywords.map(k => ({ category: { contains: k } }))
+                                        OR: excludeKeywords.map(k => ({ category: { contains: k } }))
                                     }
                                 }
                             ]
@@ -379,25 +344,31 @@ export async function GET(request) {
             }
         }
 
-        // 총 개수
-        const totalCount = await prisma.subsidy.count({ where });
+        // 병렬로 count와 findMany 실행 (DB 연결 최적화)
+        const [totalCount, subsidies] = await Promise.all([
+            prisma.subsidy.count({ where }),
+            prisma.subsidy.findMany({
+                where,
+                select: SUBSIDY_LIST_SELECT, // 필요한 필드만 조회 (대용량 Text 제외)
+                orderBy: [
+                    { endDate: 'asc' },
+                    { updatedAt: 'desc' },
+                ],
+                skip: (page - 1) * limit,
+                take: limit,
+            })
+        ]);
 
-        // 데이터 가져오기 - 마감 임박순 정렬
-        const subsidies = await prisma.subsidy.findMany({
-            where,
-            orderBy: [
-                { endDate: 'asc' }, // null(상시)이 먼저, 그 다음 마감 임박순
-                { updatedAt: 'desc' },
-            ],
-            skip: (page - 1) * limit,
-            take: limit,
-        });
-
-        // 마지막 동기화 정보
-        const lastSync = await prisma.syncLog.findFirst({
-            orderBy: { syncedAt: 'desc' },
-            where: { status: 'success' },
-        });
+        // 마지막 동기화 정보 (첫 페이지에서만 조회하여 불필요한 쿼리 방지)
+        let lastSyncedAt = null;
+        if (page === 1) {
+            const lastSync = await prisma.syncLog.findFirst({
+                select: { syncedAt: true },
+                orderBy: { syncedAt: 'desc' },
+                where: { status: 'success' },
+            });
+            lastSyncedAt = lastSync?.syncedAt || null;
+        }
 
         return Response.json({
             success: true,
@@ -407,7 +378,7 @@ export async function GET(request) {
             totalPages: Math.ceil(totalCount / limit),
             data: subsidies,
             source: 'database',
-            lastSyncedAt: lastSync?.syncedAt || null,
+            lastSyncedAt,
         });
 
     } catch (error) {

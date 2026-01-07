@@ -1,5 +1,6 @@
-import { prisma } from '@/lib/prisma';
-import axios from 'axios';
+import { prisma } from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
+import axios from "axios";
 
 // 신청기한에서 마감일 추출
 function parseEndDate(periodText) {
@@ -241,9 +242,13 @@ export async function POST(request) {
         console.log(`   - 만료로 제외: ${skippedCount}개`);
         console.log(`   - 삭제됨: ${deletedCount}개`);
 
+        // 캐시 무효화 (새 데이터 반영)
+        revalidateTag("subsidies");
+        console.log(`   - 캐시 무효화 완료`);
+
         return Response.json({
             success: true,
-            message: '데이터 동기화 완료',
+            message: "데이터 동기화 완료",
             stats: {
                 total: newCount + updatedCount,
                 new: newCount,

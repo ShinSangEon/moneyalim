@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ShareButton from "@/components/ShareButton";
@@ -18,39 +19,27 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { extractDeadline, summarizeTarget, mapCategory } from "@/lib/utils";
-import { prisma } from "@/lib/prisma";
+import { getCachedSubsidyById, getCachedRelatedSubsidies, incrementViews } from "@/lib/prisma";
 import axios from "axios";
 
-// DB에서 데이터 가져오기
-async function getSubsidy(id) {
+// React cache로 같은 요청 내에서 중복 호출 방지 (메타데이터 + 페이지)
+const getSubsidy = cache(async (id) => {
     try {
-        // DB에서 먼저 찾기
-        const subsidy = await prisma.subsidy.findFirst({
-            where: {
-                OR: [
-                    { id: id },
-                    { serviceId: id },
-                ],
-            },
-        });
+        // 10분 캐싱된 데이터 사용
+        const subsidy = await getCachedSubsidyById(id);
 
         if (subsidy) {
-            // 조회수 증가
-            await prisma.subsidy.update({
-                where: { id: subsidy.id },
-                data: { views: { increment: 1 } },
-            });
+            // 조회수 증가 (비동기, 캐싱 안 함)
+            incrementViews(subsidy.id);
             return subsidy;
         }
 
-        // DB에 없으면 API에서 직접 가져오기
         return await fetchSubsidyFromAPI(id);
     } catch (error) {
-        console.error('Failed to fetch subsidy:', error);
-        // DB 연결 실패 시 API fallback
+        console.error("Failed to fetch subsidy:", error);
         return await fetchSubsidyFromAPI(id);
     }
-}
+});
 
 // API에서 특정 지원금 가져오기 (fallback)
 async function fetchSubsidyFromAPI(id) {
@@ -516,40 +505,11 @@ export default async function SubsidyDetail({ params }) {
     );
 }
 
-async function getRelatedSubsidies(currentId, category) {
+// 관련 지원금 조회 (5분 캐싱)
+const getRelatedSubsidies = cache(async (currentId, category) => {
     try {
-        const related = await prisma.subsidy.findMany({
-            where: {
-                category: category,
-                NOT: { serviceId: currentId }, // 현재 글 제외
-                // 만료 안된 것만 추천 (선택적)
-                OR: [
-                    { endDate: null },
-                    { endDate: { gte: new Date() } }
-                ]
-            },
-            take: 4,
-            orderBy: { views: 'desc' } // 인기순
-        });
-
-        // 같은 카테고리가 4개 미만이면 전체에서 랜덤/인기순으로 채우기
-        if (related.length < 4) {
-            const more = await prisma.subsidy.findMany({
-                where: {
-                    NOT: [
-                        { serviceId: currentId },
-                        { id: { in: related.map(r => r.id) } }
-                    ]
-                },
-                take: 4 - related.length,
-                orderBy: { views: 'desc' }
-            });
-            return [...related, ...more];
-        }
-
-        return related;
+        return await getCachedRelatedSubsidies(currentId, category);
     } catch (error) {
-        // DB 에러나면 빈 배열 반환 (페이지 깨짐 방지)
         return [];
     }
-}
+});
