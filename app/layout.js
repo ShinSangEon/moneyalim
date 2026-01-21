@@ -32,6 +32,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ko">
       <head>
+        {/* Naver Site Verification */}
+        <meta name="naver-site-verification" content="d9cf38a30347d50150f52de5a1677d148cecfaa7" />
+        
         {/* Google Tag Manager */}
         {process.env.NEXT_PUBLIC_GTM_ID && (
           <script
