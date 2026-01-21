@@ -1,12 +1,10 @@
-import { MetadataRoute } from 'next';
-
 export default function robots() {
     return {
         rules: {
             userAgent: '*',
             allow: '/',
-            disallow: '/private/',
+            disallow: '/api/',
         },
-        sitemap: 'https://www.moneyalim.com/sitemap.xml',
+        sitemap: 'https://moneyalim.com/sitemap.xml',
     };
 }
