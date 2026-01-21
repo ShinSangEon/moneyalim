@@ -128,6 +128,21 @@ export async function generateMetadata({ params }) {
             title: title,
             description: description,
             type: 'article',
+            url: `https://moneyalim.com/subsidy/${id}`,
+            images: [
+                {
+                    url: 'https://moneyalim.com/logo.png',
+                    width: 800,
+                    height: 600,
+                    alt: subsidy.title,
+                },
+            ],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: title,
+            description: description,
+            images: ['https://moneyalim.com/logo.png'],
         },
     };
 }

@@ -17,6 +17,20 @@ export const metadata = {
     siteName: 'MoneyAlim',
     locale: 'ko_KR',
     type: 'website',
+    images: [
+      {
+        url: 'https://moneyalim.com/logo.png',
+        width: 800,
+        height: 600,
+        alt: 'MoneyAlim - 정부지원금 찾기',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "MoneyAlim - 숨은 정부지원금 찾기/조회",
+    description: "2026년 최신 정부지원금, AI가 3초 만에 찾아드립니다.",
+    images: ['https://moneyalim.com/logo.png'],
   },
   robots: {
     index: true,
