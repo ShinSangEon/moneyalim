@@ -1,6 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import SearchFilter from "@/components/SearchFilter";
+import CategoryIcons from "@/components/CategoryIcons";
 import SubsidyCard from "@/components/SubsidyCard";
 import Footer from "@/components/Footer";
 import { getCachedSubsidies, getCachedTotalCount } from "@/lib/prisma";
@@ -78,24 +78,24 @@ export default async function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0f172a] selection:bg-blue-500/30">
+    <main className="min-h-screen bg-white selection:bg-teal-500/20">
       <Navbar />
       {/* <FloatingAds /> - 승인 전 비활성화 */}
       <Hero totalCount={totalCount} />
-      <SearchFilter />
+      <CategoryIcons />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <span className="w-1.5 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full"></span>
             🔥 실시간 정부지원금
           </h2>
           <div className="text-right">
-            <span className="text-sm text-slate-400">
+            <span className="text-sm text-slate-500">
               총 {totalCount}개
             </span>
             {source === "api" && (
-              <p className="text-xs text-amber-400">
+              <p className="text-xs text-amber-500">
                 ⚠️ DB 동기화 필요 - /admin/sync
               </p>
             )}
@@ -110,7 +110,7 @@ export default async function Home() {
 
         {subsidies.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-slate-400 text-lg mb-4">데이터가 없습니다.</p>
+            <p className="text-slate-500 text-lg mb-4">데이터가 없습니다.</p>
             <a
               href="/admin/sync"
               className="text-blue-400 hover:text-blue-300 underline"

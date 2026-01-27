@@ -67,6 +67,35 @@ function hasChanged(oldData, newData) {
     );
 }
 
+// 서비스 데이터 변환 함수
+function transformServiceData(service) {
+    const serviceId = service.서비스ID || '';
+    const serviceName = service.서비스명 || '';
+    const period = service.신청기한내용 || service.신청기한 || '상시신청';
+    const endDate = parseEndDate(period);
+
+    return {
+        serviceId: serviceId,
+        title: serviceName || '제목 없음',
+        description: service.서비스목적요약 || service.지원내용 || '',
+        category: service.소관기관명 || '기타',
+        target: service.지원대상 || '전국민',
+        region: service.지역구분 || '전국',
+        amount: service.지원내용 || '금액 미정',
+        period: period,
+        endDate: endDate,
+        fullDescription: service.지원내용 || '',
+        requirements: service.선정기준내용 || '',
+        applicationMethod: service.신청방법내용 || '',
+        requiredDocs: service.구비서류내용 || '',
+        contactInfo: service.문의처전화번호 || '',
+        hostOrg: service.소관기관명 || '',
+        serviceUrl: service.온라인신청사이트URL || null,
+        gov24Url: serviceId ? `https://www.gov.kr/portal/rcvfvrSvc/dtlEx/${serviceId}` : null,
+        searchUrl: serviceName ? `https://www.google.com/search?q=${encodeURIComponent(serviceName + ' 신청')}` : null,
+    };
+}
+
 export async function POST(request) {
     const authHeader = request.headers.get('authorization');
     const syncKey = process.env.SYNC_SECRET_KEY || 'sync-secret-123';
