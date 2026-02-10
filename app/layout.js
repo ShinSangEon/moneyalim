@@ -42,13 +42,20 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#ffffff',
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="ko">
       <head>
         {/* Naver Site Verification */}
         <meta name="naver-site-verification" content="d9cf38a30347d50150f52de5a1677d148cecfaa7" />
-        
+
         {/* JSON-LD 구조화된 데이터 - 웹사이트 정보 */}
         <script
           type="application/ld+json"
@@ -62,7 +69,7 @@ export default function RootLayout({ children }) {
               "description": "2026년 최신 정부지원금, AI가 3초 만에 찾아드립니다.",
               "potentialAction": {
                 "@type": "SearchAction",
-                "target": "https://moneyalim.com/search?q={search_term_string}",
+                "target": "https://moneyalim.com/search?search={search_term_string}",
                 "query-input": "required name=search_term_string"
               }
             })
@@ -81,10 +88,12 @@ export default function RootLayout({ children }) {
             })
           }}
         />
-        
+
         {/* Google Tag Manager */}
         {process.env.NEXT_PUBLIC_GTM_ID && (
-          <script
+          <Script
+            id="gtm-script"
+            strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -95,8 +104,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           />
         )}
         <link
-          rel="stylesheet"
+          rel="preload"
           as="style"
+          crossOrigin="anonymous"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css"
+        />
+        <link
+          rel="stylesheet"
           crossOrigin="anonymous"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css"
         />
@@ -115,8 +129,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         )}
         {/* Google AdSense Script */}
         {process.env.NEXT_PUBLIC_ADSENSE_ID && (
-          <script
-            async
+          <Script
+            id="adsense-script"
+            strategy="afterInteractive"
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
             crossOrigin="anonymous"
           />
@@ -134,11 +149,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         {/* Google Analytics (GA4) */}
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
-            <script
-              async
+            <Script
+              id="ga4-script"
+              strategy="afterInteractive"
               src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
             />
-            <script
+            <Script
+              id="ga4-config"
+              strategy="afterInteractive"
               dangerouslySetInnerHTML={{
                 __html: `
                     window.dataLayer = window.dataLayer || [];

@@ -6,8 +6,14 @@ import UnemploymentCalculator from "@/components/calculators/UnemploymentCalcula
 import SavingsCalculator from "@/components/calculators/SavingsCalculator";
 
 export const metadata = {
-    title: "금융 계산기 - 연봉, 실업급여, 적금이자 계산",
-    description: "2026년 기준 연봉 실수령액, 실업급여 모의계산, 청년도약계좌 이자 계산을 한 번에!",
+    title: "금융 계산기 - 연봉, 실업급여, 적금이자 계산 | MoneyAlim",
+    description: "2026년 기준 연봉 실수령액, 실업급여 모의계산, 청년도약계좌 이자 계산을 한 번에! 무료 금융 계산기.",
+    openGraph: {
+        title: "금융 계산기 | MoneyAlim",
+        description: "연봉 실수령액, 실업급여, 적금이자를 한 번에 계산하세요.",
+        url: "https://moneyalim.com/calculator",
+        type: "website",
+    },
 };
 
 export default function CalculatorPage() {

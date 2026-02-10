@@ -1,13 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Search, ArrowRight, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 import CountUp from "react-countup";
+import SubsidyTargetModal from "@/components/SubsidyTargetModal";
 
 export default function Hero({ totalCount }) {
     const router = useRouter();
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (
         <div className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 bg-gradient-to-b from-slate-50 to-white overflow-hidden">
@@ -48,7 +51,7 @@ export default function Hero({ totalCount }) {
                                 지원금 조회하기
                             </button>
                             <button
-                                onClick={() => router.push('/search?sort=popular')}
+                                onClick={() => setIsModalOpen(true)}
                                 className="w-full sm:w-auto px-8 py-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-lg transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
                                 인기 지원금 보기
@@ -77,6 +80,12 @@ export default function Hero({ totalCount }) {
                     </motion.div>
                 </div>
             </div>
+
+            {/* 맞춤 지원금 모달 */}
+            <SubsidyTargetModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         </div>
     );
 }

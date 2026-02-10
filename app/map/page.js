@@ -5,8 +5,14 @@ import AdSense from "@/components/AdSense";
 import { MapPin } from "lucide-react";
 
 export const metadata = {
-    title: "우리 동네 지원금 지도",
-    description: "내가 사는 지역의 지원금만 쏙쏙! 지도로 한눈에 찾아보세요.",
+    title: "우리 동네 지원금 지도 | MoneyAlim",
+    description: "내가 사는 지역의 지원금만 쏙쏙! 서울, 경기, 부산 등 시도별 맞춤 지원금을 지도에서 클릭 한 번으로 찾아보세요.",
+    openGraph: {
+        title: "우리 동네 지원금 지도 | MoneyAlim",
+        description: "지역별 맞춤 정부지원금을 지도에서 한눈에 찾아보세요.",
+        url: "https://moneyalim.com/map",
+        type: "website",
+    },
 };
 
 export default function MapPage() {

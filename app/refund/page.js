@@ -74,8 +74,14 @@ const REFUND_SERVICES = [
 ];
 
 export const metadata = {
-    title: "숨은 내 돈 찾기 - 환급금 모음",
-    description: "국세환급금, 카드포인트, 미환급 보험금 등 잠자고 있는 내 돈을 3분 만에 찾아보세요.",
+    title: "숨은 내 돈 찾기 - 환급금 모음 | MoneyAlim",
+    description: "국세환급금, 카드포인트, 미청구 보험금, 통신비 미환급금 등 잠자고 있는 내 돈을 3분 만에 찾아보세요.",
+    openGraph: {
+        title: "숨은 내 돈 찾기 | MoneyAlim",
+        description: "국세환급금, 카드포인트, 보험금 등 잠자는 내 돈을 3분 만에 찾으세요.",
+        url: "https://moneyalim.com/refund",
+        type: "website",
+    },
 };
 
 export default function RefundPage() {

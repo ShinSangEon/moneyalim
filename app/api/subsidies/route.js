@@ -131,7 +131,7 @@ export async function GET(request) {
     const status = searchParams.get('status');
 
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '100');
+    const limit = parseInt(searchParams.get('limit') || '30');
 
     // 재사용 가능한 만료 조건
     const notExpiredCondition = getNotExpiredCondition();

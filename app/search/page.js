@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import SubsidyCard from "@/components/SubsidyCard";
 import Footer from "@/components/Footer";
-import { Search, Loader2, RefreshCw, MapPin, Briefcase, Users, Filter, Heart } from "lucide-react";
+import { Search, Loader2, RefreshCw, MapPin, Briefcase, Users, Filter, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { FILTER_CATEGORIES, FILTER_REGIONS } from "@/lib/utils";
 
 // 지원 대상 필터 상수 정의
@@ -32,6 +32,10 @@ export default function SearchPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [totalCount, setTotalCount] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const resultsRef = useRef(null);
+    const ITEMS_PER_PAGE = 30;
 
     // URL에서 필터 상태 가져오기 (초기값)
     const initialSearchTerm = searchParams.get("search") || "";
@@ -53,17 +57,19 @@ export default function SearchPage() {
         setLocalRegion(searchParams.get("region") || "전체");
         setLocalStatus(searchParams.get("status") || "전체");
         setLocalAge(searchParams.get("age") || "");
+        const pageFromUrl = parseInt(searchParams.get("page") || "1");
+        setCurrentPage(pageFromUrl);
 
-        fetchSubsidies();
+        fetchSubsidies(pageFromUrl);
     }, [searchParams]);
 
-    const fetchSubsidies = async () => {
+    const fetchSubsidies = async (page = 1) => {
         setLoading(true);
         setError(null);
         try {
-            // API 호출은 URL 파라미터 기준 (로컬 상태 아님)
             const params = new URLSearchParams(searchParams.toString());
-            // 이미 URLSearchParams에 값이 있지만, 명시적으로 확인
+            params.set("page", page.toString());
+            params.set("limit", ITEMS_PER_PAGE.toString());
 
             const response = await fetch(`/api/subsidies?${params.toString()}`);
             const data = await response.json();
@@ -71,6 +77,7 @@ export default function SearchPage() {
             if (data.success) {
                 setSubsidies(data.data || []);
                 setTotalCount(data.totalCount || 0);
+                setTotalPages(data.totalPages || 1);
             } else {
                 setError(data.error || "데이터를 불러오지 못했습니다.");
             }
@@ -82,7 +89,7 @@ export default function SearchPage() {
         }
     };
 
-    // 필터 적용 (검색 버튼 클릭 시)
+    // 필터 적용 (검색 버튼 클릭 시) - 항상 1페이지로 리셋
     const handleApplyFilters = () => {
         const params = new URLSearchParams();
         if (localSearchTerm) params.set("search", localSearchTerm);
@@ -90,9 +97,42 @@ export default function SearchPage() {
         if (localRegion !== "전체") params.set("region", localRegion);
         if (localStatus !== "전체") params.set("status", localStatus);
         if (localAge) params.set("age", localAge);
+        // 필터 변경 시 page=1로 리셋 (page 파라미터 제거 = 기본 1)
 
         router.push(`/search?${params.toString()}`);
     };
+
+    // 페이지 변경 핸들러
+    const handlePageChange = useCallback((newPage) => {
+        if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+        const params = new URLSearchParams(searchParams.toString());
+        if (newPage > 1) {
+            params.set("page", newPage.toString());
+        } else {
+            params.delete("page");
+        }
+        router.push(`/search?${params.toString()}`, { scroll: false });
+        // 결과 영역으로 부드럽게 스크롤
+        setTimeout(() => {
+            resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }, [totalPages, currentPage, searchParams, router]);
+
+    // 페이지 번호 목록 생성 (모바일: 최대 5개, PC: 최대 7개)
+    const getPageNumbers = useCallback(() => {
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+        const maxVisible = isMobile ? 5 : 7;
+        const pages = [];
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(totalPages, start + maxVisible - 1);
+        if (end - start + 1 < maxVisible) {
+            start = Math.max(1, end - maxVisible + 1);
+        }
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+        return pages;
+    }, [currentPage, totalPages]);
 
     // 로컬 필터 변경 핸들러
     const toggleLocalFilter = (type, value) => {
@@ -298,26 +338,26 @@ export default function SearchPage() {
                 {/* Results */}
                 {!loading && !error && (
                     <>
-                        <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+                        <div ref={resultsRef} className="mb-6 flex items-center justify-between flex-wrap gap-4 scroll-mt-24">
                             <div className="flex flex-col gap-1">
                                 <p className="text-slate-500">
                                     총 <span className="text-slate-900 font-bold text-lg">{totalCount}</span>건의 지원금이 검색되었습니다.
                                 </p>
-                                {(selectedRegion !== "전체" || selectedCategory !== "전체") && (
+                                {(localRegion !== "전체" || localCategory !== "전체") && (
                                     <div className="flex flex-wrap gap-2">
-                                        {selectedRegion !== "전체" && (
+                                        {localRegion !== "전체" && (
                                             <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-600 text-xs font-semibold border border-emerald-100">
-                                                {selectedRegion}
+                                                {localRegion}
                                             </span>
                                         )}
-                                        {selectedCategory !== "전체" && (
+                                        {localCategory !== "전체" && (
                                             <span className="px-2.5 py-1 rounded-md bg-blue-50 text-blue-600 text-xs font-semibold border border-blue-100">
-                                                {selectedCategory}
+                                                {localCategory}
                                             </span>
                                         )}
-                                        {selectedStatus !== "전체" && (
+                                        {localStatus !== "전체" && (
                                             <span className="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-600 text-xs font-semibold border border-indigo-100">
-                                                {selectedStatus}
+                                                {localStatus}
                                             </span>
                                         )}
                                     </div>
@@ -338,6 +378,89 @@ export default function SearchPage() {
                                 <SubsidyCard key={subsidy.id} subsidy={subsidy} index={index} />
                             ))}
                         </div>
+
+                        {/* 페이지네이션 */}
+                        {subsidies.length > 0 && totalPages > 1 && (
+                            <div className="mt-10 mb-4">
+                                {/* 페이지 정보 텍스트 */}
+                                <p className="text-center text-sm text-slate-400 mb-4 font-medium">
+                                    {totalCount.toLocaleString()}개 중 {((currentPage - 1) * ITEMS_PER_PAGE) + 1}~{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)}번째
+                                </p>
+
+                                {/* 페이지네이션 컨트롤 */}
+                                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                                    {/* 이전 버튼 */}
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className={`flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl border transition-all font-medium text-sm ${currentPage === 1
+                                                ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50'
+                                                : 'border-slate-200 text-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 active:scale-95 bg-white shadow-sm'
+                                            }`}
+                                        aria-label="이전 페이지"
+                                    >
+                                        <ChevronLeft className="w-5 h-5" />
+                                    </button>
+
+                                    {/* 첫 페이지 + 점점점 */}
+                                    {getPageNumbers()[0] > 1 && (
+                                        <>
+                                            <button
+                                                onClick={() => handlePageChange(1)}
+                                                className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl border border-slate-200 text-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 active:scale-95 bg-white shadow-sm transition-all font-bold text-sm"
+                                            >
+                                                1
+                                            </button>
+                                            {getPageNumbers()[0] > 2 && (
+                                                <span className="flex items-center justify-center w-8 h-10 text-slate-300 text-sm select-none">···</span>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {/* 페이지 번호들 */}
+                                    {getPageNumbers().map((pageNum) => (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => handlePageChange(pageNum)}
+                                            className={`flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl border transition-all font-bold text-sm ${pageNum === currentPage
+                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/25 scale-105'
+                                                    : 'border-slate-200 text-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 active:scale-95 bg-white shadow-sm'
+                                                }`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    ))}
+
+                                    {/* 점점점 + 마지막 페이지 */}
+                                    {getPageNumbers()[getPageNumbers().length - 1] < totalPages && (
+                                        <>
+                                            {getPageNumbers()[getPageNumbers().length - 1] < totalPages - 1 && (
+                                                <span className="flex items-center justify-center w-8 h-10 text-slate-300 text-sm select-none">···</span>
+                                            )}
+                                            <button
+                                                onClick={() => handlePageChange(totalPages)}
+                                                className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl border border-slate-200 text-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 active:scale-95 bg-white shadow-sm transition-all font-bold text-sm"
+                                            >
+                                                {totalPages}
+                                            </button>
+                                        </>
+                                    )}
+
+                                    {/* 다음 버튼 */}
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        className={`flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl border transition-all font-medium text-sm ${currentPage === totalPages
+                                                ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50'
+                                                : 'border-slate-200 text-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 active:scale-95 bg-white shadow-sm'
+                                            }`}
+                                        aria-label="다음 페이지"
+                                    >
+                                        <ChevronRight className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {subsidies.length === 0 && (
                             <div className="text-center py-20">
@@ -365,14 +488,12 @@ export default function SearchPage() {
                                         <div className="flex flex-wrap justify-center gap-2">
                                             {[
                                                 { label: "청년", category: "생활안정" },
-                                                // Note: Actual categories might differ, ensuring safe fallbacks or correct mapping is good, 
-                                                // but using generic ones for 'Recommended' is fine.
                                                 { label: "소상공인", category: "소상공인" },
                                                 { label: "육아", category: "보육/교육" },
                                             ].map((item, idx) => (
                                                 <button
                                                     key={idx}
-                                                    onClick={() => updateFilter("search", item.label)}
+                                                    onClick={() => { setLocalSearchTerm(item.label); router.push(`/search?search=${encodeURIComponent(item.label)}`); }}
                                                     className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-sm font-medium rounded-lg transition-colors border border-slate-200"
                                                 >
                                                     #{item.label}

@@ -244,17 +244,12 @@ export default async function SubsidyDetail({ params }) {
     };
 
     return (
-        HEAD
-        < main className = "min-h-screen bg-[#0f172a] pb-20" >
-            {/* JSON-LD 구조화된 데이터 */ }
-            < script
-    type = "application/ld+json"
-    dangerouslySetInnerHTML = {{ __html: JSON.stringify(jsonLd) }
-}
+        <main className="min-h-screen bg-slate-50 pb-20">
+            {/* JSON-LD 구조화된 데이터 */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
-
-    < main className = "min-h-screen bg-slate-50 pb-20" >
->>>>>>> 8701d67b1101751b9f8a1e43ede4a3586268a0d7
             <Navbar />
 
             <div className="pt-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
@@ -535,7 +530,7 @@ export default async function SubsidyDetail({ params }) {
                 </div>
             </div>
 
-{/* 하단 광고 */ }
+            {/* 하단 광고 */}
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 mt-12">
                 <AdSense slot="SUB_BOT" format="autorelaxed" />
             </div>

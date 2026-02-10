@@ -1,31 +1,32 @@
 import { getAllSubsidyIds } from "@/lib/prisma";
-import axios from 'axios';
-
-// ... (fetchFromAPI removed or kept as fallback)
 
 export default async function sitemap() {
-    const baseUrl = 'https://www.moneyalim.com';
+    const baseUrl = 'https://moneyalim.com';
 
-    // 1. 고정 페이지
+    // 1. 고정 페이지 (priority 차등화)
     const staticRoutes = [
-        '',
-        '/search',
-        '/about',
-        '/contact',
-        '/terms',
-        '/privacy',
-    ].map((route) => ({
+        { route: '', priority: 1.0, changeFrequency: 'daily' },
+        { route: '/search', priority: 0.9, changeFrequency: 'daily' },
+        { route: '/calendar', priority: 0.8, changeFrequency: 'daily' },
+        { route: '/map', priority: 0.7, changeFrequency: 'weekly' },
+        { route: '/calculator', priority: 0.7, changeFrequency: 'weekly' },
+        { route: '/refund', priority: 0.7, changeFrequency: 'weekly' },
+        { route: '/bookmarks', priority: 0.5, changeFrequency: 'weekly' },
+        { route: '/about', priority: 0.5, changeFrequency: 'monthly' },
+        { route: '/contact', priority: 0.4, changeFrequency: 'monthly' },
+        { route: '/terms', priority: 0.3, changeFrequency: 'yearly' },
+        { route: '/privacy', priority: 0.3, changeFrequency: 'yearly' },
+    ].map(({ route, priority, changeFrequency }) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: 1,
+        changeFrequency,
+        priority,
     }));
 
     // 2. 동적 페이지 (지원금 상세)
     let subsidyRoutes = [];
 
     try {
-        // 전체 지원금 ID 가져오기 (1만 개 이상)
         const dbSubsidies = await getAllSubsidyIds();
 
         if (dbSubsidies.length > 0) {
@@ -36,7 +37,6 @@ export default async function sitemap() {
                 priority: 0.8,
             }));
         }
-        // fallback logic for API if DB is empty can be kept if needed, but dbSubsidies should cover it.
     } catch (error) {
         console.error("Sitemap Generation Error:", error);
     }

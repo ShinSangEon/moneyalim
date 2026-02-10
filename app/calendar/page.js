@@ -5,6 +5,17 @@ import Link from "next/link";
 import { Calendar as CalendarIcon, Clock, ArrowRight, AlertCircle } from "lucide-react";
 import { extractDeadline, mapCategory } from "@/lib/utils";
 
+export const metadata = {
+    title: "마감 임박 지원금 캘린더 | MoneyAlim",
+    description: "곧 마감되는 정부지원금을 놓치지 마세요! 마감일별로 정리된 지원금 캘린더에서 D-DAY를 한눈에 확인하고 빠르게 신청하세요.",
+    openGraph: {
+        title: "마감 임박 지원금 캘린더 | MoneyAlim",
+        description: "곧 마감되는 정부지원금을 마감일별로 확인하세요.",
+        url: "https://moneyalim.com/calendar",
+        type: "website",
+    },
+};
+
 // 날짜 포맷팅 (YYYY.MM.DD)
 function formatDate(date) {
     if (!date) return "";
