@@ -207,8 +207,33 @@ export default async function SubsidyDetail({ params }) {
     const naverSearchUrl = subsidy.naverSearchUrl || (subsidy.title ? `https://search.naver.com/search.naver?query=${encodeURIComponent(subsidy.title + ' 신청')}` : null);
     const googleSearchUrl = subsidy.searchUrl || (subsidy.title ? `https://www.google.com/search?q=${encodeURIComponent(subsidy.title + ' 신청')}` : null);
 
+    // JSON-LD 구조화된 데이터 생성
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "GovernmentService",
+        "name": subsidy.title,
+        "description": subsidy.description || subsidy.title,
+        "provider": {
+            "@type": "GovernmentOrganization",
+            "name": subsidy.hostOrg || subsidy.category || "정부"
+        },
+        "areaServed": {
+            "@type": "Country",
+            "name": "대한민국"
+        },
+        "audience": {
+            "@type": "Audience",
+            "audienceType": subsidy.target || "전국민"
+        }
+    };
+
     return (
         <main className="min-h-screen bg-[#0f172a] pb-20">
+            {/* JSON-LD 구조화된 데이터 */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <Navbar />
 
             <div className="pt-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">

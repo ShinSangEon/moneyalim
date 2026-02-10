@@ -49,6 +49,39 @@ export default function RootLayout({ children }) {
         {/* Naver Site Verification */}
         <meta name="naver-site-verification" content="d9cf38a30347d50150f52de5a1677d148cecfaa7" />
         
+        {/* JSON-LD 구조화된 데이터 - 웹사이트 정보 */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "MoneyAlim",
+              "alternateName": "머니알림",
+              "url": "https://moneyalim.com",
+              "description": "2026년 최신 정부지원금, AI가 3초 만에 찾아드립니다.",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://moneyalim.com/search?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+              }
+            })
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "MoneyAlim",
+              "url": "https://moneyalim.com",
+              "logo": "https://moneyalim.com/logo.png",
+              "sameAs": []
+            })
+          }}
+        />
+        
         {/* Google Tag Manager */}
         {process.env.NEXT_PUBLIC_GTM_ID && (
           <script
