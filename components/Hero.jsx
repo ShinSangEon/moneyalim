@@ -1,121 +1,81 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Sparkles, TrendingUp, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { Search, ArrowRight, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
-import SmartFilter from "@/components/SmartFilter";
-import PopularSearches from "@/components/PopularSearches";
-import Link from "next/link";
-
-import { useRef, useEffect } from "react";
-import { useInView, animate } from "framer-motion";
-
-function Counter({ value }) {
-    const ref = useRef(null);
-    const isInView = useInView(ref, { once: true, margin: "-10px" });
-
-    useEffect(() => {
-        if (isInView) {
-            const controls = animate(0, value, {
-                duration: 2,
-                ease: "easeOut",
-                onUpdate: (latest) => {
-                    if (ref.current) {
-                        ref.current.textContent = Intl.NumberFormat("en-US").format(latest.toFixed(0));
-                    }
-                }
-            });
-            return () => controls.stop();
-        }
-    }, [isInView, value]);
-
-    return <span ref={ref} />;
-}
+import CountUp from "react-countup";
 
 export default function Hero({ totalCount }) {
     const router = useRouter();
 
     return (
-        <div className="relative pt-24 pb-16 sm:pt-40 sm:pb-32 overflow-hidden">
-            {/* Animated Background Elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <motion.div
-                    animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.3, 0.5, 0.3],
-                        x: [0, 50, 0],
-                        y: [0, -30, 0]
-                    }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute -top-[30%] -left-[10%] w-[70%] h-[70%] rounded-full bg-blue-600/20 blur-[80px] sm:blur-[120px]"
-                />
-                <motion.div
-                    animate={{
-                        scale: [1, 1.1, 1],
-                        opacity: [0.3, 0.6, 0.3],
-                        x: [0, -30, 0],
-                        y: [0, 50, 0]
-                    }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                    className="absolute top-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[80px] sm:blur-[120px]"
-                />
-                <motion.div
-                    animate={{
-                        scale: [1, 1.3, 1],
-                        opacity: [0.2, 0.4, 0.2],
-                    }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    className="absolute bottom-0 left-1/3 w-[50%] h-[50%] rounded-full bg-emerald-500/10 blur-[60px] sm:blur-[100px]"
-                />
-            </div>
+        <div className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 bg-gradient-to-b from-slate-50 to-white overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs sm:text-sm font-medium mb-6 sm:mb-8"
-                >
-                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>
-                        현재 시행 중인 지원금 <Counter value={totalCount || 0} />개
-                    </span>
-                </motion.div>
+                    {/* Left Content (Text) */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.6 }}
+                        className="flex-1 text-center lg:text-left z-10"
+                    >
+                        <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs sm:text-sm font-semibold">
+                            <TrendingUp className="w-4 h-4" />
+                            <span>실시간 정부지원금 <CountUp end={totalCount || 0} separator="," duration={2} />개 대기 중</span>
+                        </div>
 
-                <motion.h1
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight mb-6 sm:mb-8 leading-tight"
-                >
-                    <span className="block text-white mb-2">본인에게 딱 맞는</span>
-                    <span className="block bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-emerald-400 animate-gradient-x">
-                        지원금을 찾아가세요
-                    </span>
-                </motion.h1>
+                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-[1.2] mb-6">
+                            놓치고 있던 <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">
+                                숨은 지원금
+                            </span>을 <br />
+                            쇼핑하듯 찾아보세요.
+                        </h1>
 
-                <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="mt-4 sm:mt-6 text-base sm:text-xl text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed px-4"
-                >
-                    지역별·대상별로 흩어져 있는 <br className="block sm:hidden" />
-                    <span className="text-slate-200 font-semibold">정부 지원금 정보</span>를 <br className="hidden sm:block" />
-                    한 곳에서 <span className="text-blue-400 font-bold">쉽고 빠르게</span> 찾아보세요.
-                </motion.p>
+                        <p className="text-lg sm:text-xl text-slate-500 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                            나도 받을 수 있을까? 고민하지 마세요.<br className="hidden sm:block" />
+                            간단한 키워드 검색으로 나에게 딱 맞는 혜택을 찾아드립니다.
+                        </p>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    className="mb-10 sm:mb-12"
-                >
-                    <SmartFilter />
-                </motion.div>
+                        <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+                            <button
+                                onClick={() => router.push('/search')}
+                                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <Search className="w-5 h-5" />
+                                지원금 조회하기
+                            </button>
+                            <button
+                                onClick={() => router.push('/search?sort=popular')}
+                                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                인기 지원금 보기
+                                <ArrowRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </motion.div>
 
-                {/* 실시간 인기 검색어 */}
-                <PopularSearches />
+                    {/* Right Content (Image) */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, x: 20 }}
+                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        className="flex-1 relative w-full h-[300px] sm:h-[400px] lg:h-[500px]"
+                    >
+                        {/* Blob Background */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-blue-100/50 to-teal-100/50 rounded-full blur-3xl -z-10 animate-pulse-slow" />
+
+                        <Image
+                            src="/hero-lifestyle.png"
+                            alt="Financial Growth Lifestyle"
+                            fill
+                            className="object-contain drop-shadow-2xl"
+                            priority
+                        />
+                    </motion.div>
+                </div>
             </div>
         </div>
     );
